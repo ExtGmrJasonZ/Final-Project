@@ -54,6 +54,11 @@ class Racer(pygame.sprite.Sprite):
         self.left = False
         self.x = x
         self.y = y
+        self.acceleratex = 0
+        self.acceleratey = 0
+        self.speedx = 0
+        self.speedy = 0
+        self.max_speed = 4
 
     # Function for updating the animations as the motorcycle moves around
     def update(self):
@@ -89,7 +94,15 @@ class Racer(pygame.sprite.Sprite):
             self.image = pygame.image.load("reference\\graphics\\bike-downleft.png")
             self.image = pygame.transform.scale(self.image,(40,30))
             self.rect = self.image.get_rect()
-
+        if self.acceleratex < self.max_speed:
+            self.acceleratex += self.speedx
+        else:
+            self.acceleratex = self.max_speed
+        if self.acceleratey < self.max_speed:
+            self.acceleratey += self.speedy
+        else: self.acceleratey = self.max_speed
+        self.x += self.acceleratex
+        self.y += self.acceleratey
         self.rect.center = (self.x , self.y)
 
 # Class for the first map
@@ -104,7 +117,7 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, all_sprites, obstacles_sprites)
         self.image = pygame.image.load('reference/graphics/tree.png')
-        self.image= pygame.transform.scale(self.image,(60, 40))
+        self.image= pygame.transform.scale(self.image,(40, 40))
         self.rect = self.image.get_rect()
 # Class for the finish line in the map
 class FinishLine(pygame.sprite.Sprite):
@@ -138,14 +151,15 @@ def start_menu():
     pygame.display.flip()
     wait_for_menu()             # Calling for the function so that we can select options later in the start menu screen
 
+# Function for the sound when starting the game
 def start_sound():
     start = pygame.mixer.Sound("reference/sound/bikestart.wav")
     start.play()
-
+# Function for the sound when colliding with the obstacle
 def hit_sound():
     ouch = pygame.mixer.Sound("reference/sound/slide2.wav")
     ouch.play()
-
+# Function for the sound when moving the racer
 def speeding_sound():
     ngebut = pygame.mixer.Sound("reference/sound/rev4.wav")
     ngebut.play()
@@ -159,23 +173,67 @@ def text_in_game(text, size, color, x, y):
     gamedisplays.blit(text_surface, text_rect)
 # Function for the manual in game
 def manual_for_game():
+
     am = Arrows_manual()
     gamedisplays.fill(Color.Black)
     text_in_game("Press either of these arrows to move the racer", 20, Color.White, 683, 500)
     text_in_game("Finish the track with the time given", 20, Color.White, 683, 550)
-    text_in_game("Finish the track with the time given", 20, Color.White, 683, 600)
+    text_in_game("This race will start in 5 seconds", 20, Color.White, 683, 625)
     am.arrow_manual_rect.centerx = display_width/2
     am.arrow_manual_rect.centery = 400
     gamedisplays.blit(am.arrow_manual, am.arrow_manual_rect)
     pygame.display.flip()
-    draw()
-    game_loop()
+# Function for the game over screen when you reach the finish line on time
+def gameover_screen_onTime():
+    sb = Start_button()             # Object for the start button
+    qb = Quit_button()              # Object for the quit button
+    gamedisplays.fill(Color.Goldenrod)
+    text_in_game("Press Enter for going back to menu ---- Press q for quit", 20, Color.White, 300, 600)
+    text_in_game("SUCCESS!", 40, Color.White, display_width/2, 100)
+    sb.start_button_rect.centerx = display_width/2
+    sb.start_button_rect.centery = 300
+    qb.quit_button_rect.centerx = display_width/2
+    qb.quit_button_rect.centery = 550
+    gamedisplays.blit(sb.start_button, sb.start_button_rect)
+    gamedisplays.blit(qb.quit_button, qb.quit_button_rect)
+    pygame.display.flip()
+    waitforgameover_screen()
+# Function for the game over screen when you reach the finish line late
+def gameover_screen_OffTime():
+    sb = Start_button()             # Object for the start button
+    qb = Quit_button()              # Object for the quit button
+    gamedisplays.fill(Color.Goldenrod)
+    text_in_game("Press Enter for going back to menu ---- Press q for quit", 20, Color.White, 300, 600)
+    text_in_game("TRY AGAIN!", 40, Color.White, display_width/2, 100)
+    sb.start_button_rect.centerx = display_width/2
+    sb.start_button_rect.centery = 300
+    qb.quit_button_rect.centerx = display_width/2
+    qb.quit_button_rect.centery = 550
+    gamedisplays.blit(sb.start_button, sb.start_button_rect)
+    gamedisplays.blit(qb.quit_button, qb.quit_button_rect)
+    pygame.display.flip()
+    waitforgameover_screen()
+# Function for inputing key down events in the game over menu
+def waitforgameover_screen():
+    global play, bumped
+    finishing = True
+    while finishing:
+        clock.tick(120)
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    start_menu()
+                    game_loop()
+                    draw()
+                    finishing = False
+                    play = False
+                    bumped = False
 
-    
-'''
-def gameover_screen:
-'''
-# Function so that we can select options in the menu screen
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
+
+# Function so that we can select options (Keydown events) in the menu screen
 def wait_for_menu():
     waiting = True
     while waiting:
@@ -184,18 +242,20 @@ def wait_for_menu():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     manual_for_game()
-                    if event.key == pygame.K_RETURN:
-                        waiting = False
-                        start_sound()
+                    pygame.time.wait(5000)  # Paused for 5 seconds
+                    waiting = False
+                    start_sound()
+
                 if event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
 
 
-r = Racer(display_height/2, display_width/2)            # Object for Racer
+
 m = Map1()                                              # Object for Map
+
 f = FinishLine()                                        # Object for Finish Line
-all_sprites.add(r, f)                                   # adding the racer and finish tree sprite in the map
+all_sprites.add(f)                                   # adding the tree sprite in the map
 # Function for displaying everything in the screen
 def draw():
     gamedisplays.fill(Color.Blood)
@@ -203,41 +263,66 @@ def draw():
     text_in_game("Time left: {}".format(timer), 20, Color.White, 683, 384)
 
 
-create_tree = False
-bumped = False
-play = False
-timer_miliseconds = 0
+create_tree = False                         # Variable
+bumped = False                              # Variable
+play = False                                # Variable
+timer_miliseconds = 0                       # To make the timer seconds not milliseconds
 timer = 20           # Timer in the game
-# Function for game loop
+# Function for game loop after pressing enter to start the game
 def game_loop():
 
     global bumped, create_tree, play, timer, timer_miliseconds
     while not bumped:
-        keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()                                 # this is a method for inputing 2 keydown events in the same time.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 bumped = True
 
         hits = pygame.sprite.spritecollide(r, obstacles_sprites, False, pygame.sprite.collide_mask)          # Collision with the obstacles
         finished = pygame.sprite.spritecollide(r, finishline_sprites, False)                                # Collision with the finish line
-        border = pygame.sprite.spritecollide(r, finishline_sprites, False)
+
         if hits:
-            if r.left:                                                                           # if collision with the obstacles, you will for stop 0.5 seconds
-                r.rect.x = hits[0].rect.right + 200
+            if r.left:                                                                           # if collision with the obstaclesq
+                r.x = hits[0].rect.right + 5
                 hit_sound()
+
             elif r.right:
-                r.rect.x = hits[0].rect.left + 200
+                r.x = hits[0].rect.left + 5
                 hit_sound()
+
             elif r.up:
-                r.rect.x = hits[0].rect.down + 200
-                hit_sound()
+                if r.left:
+                    r.y = hits[0].rect.bottom + 5
+                    hit_sound()
+                elif r.right:
+                    r.y = hits[0].rect.bottom + 5
+                    hit_sound()
+                else:
+                    r.y = hits[0].rect.bottom + 5
+                    hit_sound()
             elif r.down:
-                r.rect.x = hits[0].rect.up + 200
-                hit_sound()
+
+                if r.left:
+                    r.y = hits[0].rect.top + 5
+                    hit_sound()
+                elif r.right:
+                    r.y = hits[0].rect.top + 5
+                    hit_sound()
+                else:
+                    r.y = hits[0].rect.top + 5
+                    hit_sound()
+
         if finished:                                                                                        # If touch the finish line, it means you have completed the track.
-            bumped = True
-            play = False
-                                                                                                # So you cannot just go backwards to the finish line
+            if timer >= 0:                                                                                  # If you completed the track on time.
+                bumped = True
+                play = False
+                gameover_screen_onTime()
+
+            if timer <0:                                                                                    # If you completed the track late.
+                bumped = True
+                play = False
+                gameover_screen_OffTime()
+
      #This is for all the controls for the racer.
         if keys[pygame.K_DOWN and pygame.K_RIGHT]:
             r.x += 1
@@ -307,40 +392,20 @@ def game_loop():
             r.left = False
             speeding_sound()
 
+# For spawning the obstacles randomly on the map
+        if not create_tree:                     # If looping if create_tree is false
+            for i in range(100):                # Printing it 100 times on the screen
+                tree = Obstacle()               # Calling object tree from class obstacle
+                tree.rect.x = random.randint(0, 1366)       # Coordinate x starting from 0 until 1366 which is the game resolution
+                tree.rect.y = random.randint(0, 768)        # Coordinate y starting from 0 until 768 which is the game resolution, this will print the tree 100 times randomly in the screen according to the x and y coordinates
 
-        #
-        # if event.type == pygame.KEYUP:
-        #     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT or event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-        #         r.rect.x += 0
-        #         r.rect.y += 0
-        #     if event.key == pygame.K_DOWN and event.key == pygame.K_RIGHT:
-        #         r.rect.y += 0
-        #         r.rect.x += 0
-        #
-        #     if event.key == pygame.K_DOWN and event.key == pygame.K_LEFT:
-        #         r.rect.y += 0
-        #         r.rect.x += 0
-        #
-        #     if event.key == pygame.K_UP and event.key == pygame.K_RIGHT:
-        #         r.rect.y += 0
-        #         r.rect.x += 0
-        #
-        #     if event.key == pygame.K_UP and event.key == pygame.K_LEFT:
-        #         r.rect.y += 0
-        #         r.rect.x += 0
-
-        # For spawning the obstacles randomly on the map
-        if not create_tree:
-            for i in range(100):
-                tree = Obstacle()
-                tree.rect.x = random.randint(0, 1366)
-                tree.rect.y = random.randint(0, 768)
-
-        create_tree = True
+        create_tree = True                      # To stop infinite loop
         timer_miliseconds += 1.5
-        if timer_miliseconds > 49:
+
+        # For updating the timer as the time decreases as you go on in the track
+        if timer_miliseconds > 49:              # if looping if the milliseconds more than 49, it becomes 1 second
             timer_miliseconds = 0
-            timer -= 1
+            timer -= 1                          # Decrease the timer by 1 second
 
 
 
@@ -352,15 +417,22 @@ def game_loop():
 
         pygame.display.update()
         clock.tick(500)
+# Game loop after you completed the game once
 run = True
-# While loop for running
 while run:
-    start_menu()
+    start_menu()                                         # Calling start menu
+    r = Racer(display_height/2, display_width/2)         # calling object racer
+    all_sprites.add(r)                                   # adding the racer in the map
+
+    timer = 20
     play = True
     if play:
         game_loop()
+
 # Quit
 pygame.quit()
 quit()
 
-# Reference from Muhammad Erizky Suryaputra, Fernanda Dzaky, GRIP
+# Debugging Reference: from Muhammad Erizky Suryaputra, Fernanda Dzaky
+# Images and Sounds : Stuart Laxton(GRIP), 2018
+# Animations: https://www.youtube.com/channel/UCej-wawhhPdjVKihCRk2Ang, 2018
