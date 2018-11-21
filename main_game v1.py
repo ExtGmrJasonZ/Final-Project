@@ -215,19 +215,20 @@ def gameover_screen_OffTime():
     waitforgameover_screen()
 # Function for inputing key down events in the game over menu
 def waitforgameover_screen():
-    global play, bumped
+    global play, bumped,run
     finishing = True
     while finishing:
         clock.tick(120)
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    start_menu()
-                    game_loop()
-                    draw()
+                    # start_menu()
+                    # game_loop()
+                    # draw()
                     finishing = False
                     play = False
-                    bumped = False
+
+                    run = False
 
                 if event.key == pygame.K_q:
                     pygame.quit()
@@ -250,12 +251,7 @@ def wait_for_menu():
                     pygame.quit()
                     sys.exit()
 
-
-
-m = Map1()                                              # Object for Map
-
-f = FinishLine()                                        # Object for Finish Line
-all_sprites.add(f)                                   # adding the tree sprite in the map
+# all_sprites.add(f)                                   # adding the tree sprite in the map
 # Function for displaying everything in the screen
 def draw():
     gamedisplays.fill(Color.Blood)
@@ -392,14 +388,7 @@ def game_loop():
             r.left = False
             speeding_sound()
 
-# For spawning the obstacles randomly on the map
-        if not create_tree:                     # If looping if create_tree is false
-            for i in range(100):                # Printing it 100 times on the screen
-                tree = Obstacle()               # Calling object tree from class obstacle
-                tree.rect.x = random.randint(0, 1366)       # Coordinate x starting from 0 until 1366 which is the game resolution
-                tree.rect.y = random.randint(0, 768)        # Coordinate y starting from 0 until 768 which is the game resolution, this will print the tree 100 times randomly in the screen according to the x and y coordinates
 
-        create_tree = True                      # To stop infinite loop
         timer_miliseconds += 1.5
 
         # For updating the timer as the time decreases as you go on in the track
@@ -419,15 +408,32 @@ def game_loop():
         clock.tick(500)
 # Game loop after you completed the game once
 run = True
-while run:
-    start_menu()                                         # Calling start menu
-    r = Racer(display_height/2, display_width/2)         # calling object racer
-    all_sprites.add(r)                                   # adding the racer in the map
+run2 = True
+while run2:
+    run = True
+    bumped = False
+    create_tree = False
+    all_sprites.empty()             #Empty all the sprites from before
+    obstacles_sprites.empty()       #Empty the obstacles sprites from the previous session
+    while run:
+        start_menu()                                         # Calling start menu
+        r = Racer(display_height/2, display_width/2)         # calling object racer
+        m = Map1()                                              # Object for Map
+        # For spawning the obstacles randomly on the map
+        if not create_tree:                     # If looping if create_tree is false
+            for i in range(100):                # Printing it 100 times on the screen
+                tree = Obstacle()               # Calling object tree from class obstacle
+                tree.rect.x = random.randint(0, 1366)       # Coordinate x starting from 0 until 1366 which is the game resolution
+                tree.rect.y = random.randint(0, 768)        # Coordinate y starting from 0 until 768 which is the game resolution, this will print the tree 100 times randomly in the screen according to the x and y coordinates
 
-    timer = 20
-    play = True
-    if play:
-        game_loop()
+        create_tree = True                      # To stop infinite loop
+        f = FinishLine()                                        # Object for Finish Line
+        all_sprites.add(r)                                   # adding the racer in the map
+
+        timer = 20
+        play = True
+        if play:
+            game_loop()
 
 # Quit
 pygame.quit()
